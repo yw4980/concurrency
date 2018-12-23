@@ -1,35 +1,42 @@
-package com.mmall.concurrency.example.atomic;
+package com.mmall.concurrency.example.commonUnsafe;
 
 import com.mmall.concurrency.annoations.ThreadSafe;
 import lombok.extern.slf4j.Slf4j;
+import org.joda.time.DateTime;
+import org.joda.time.format.DateTimeFormat;
+import org.joda.time.format.DateTimeFormatter;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Semaphore;
-import java.util.concurrent.atomic.AtomicInteger;
 
+/**
+ * joda.time里的DateTimeFormatter为线程安全的日期类
+ *
+ */
 @Slf4j
 @ThreadSafe
-public class AtomicExample1 {
+public class DateFormateExample3 {
 
     //请求总数
-    public static int clientTotal=1000;
+    public static int clientTotal=5000;
 
     //同时并发执行的线程数
-    public static int threadTotal=50;
+    public static int threadTotal=200;
 
-    public static AtomicInteger count = new AtomicInteger(0);
+    private static DateTimeFormatter dateTimeFormatter = DateTimeFormat.forPattern("yyyyMMdd");
 
     public static void main(String[] args) throws Exception{
         ExecutorService executorService= Executors.newCachedThreadPool();
         final Semaphore semaphore= new Semaphore(threadTotal);
         final CountDownLatch countDownLatch=new CountDownLatch(clientTotal);
         for (int i=0;i<clientTotal;i++){
+            final int count=i;
             executorService.execute(()->{
                 try{
                     semaphore.acquire();
-                    add();
+                    update(count);
                     semaphore.release();
                 }catch (Exception e){
                     log.error("exception",e);
@@ -37,14 +44,12 @@ public class AtomicExample1 {
                 countDownLatch.countDown();
             });
         }
-            countDownLatch.await();
-            executorService.shutdown();
-            log.info("count:{}"+count.get());
+        countDownLatch.await();
+        executorService.shutdown();
 
     }
 
-    private static void add(){
-        count.incrementAndGet();
+    private static void update(int i){
+        log.info("{},{}",i,DateTime.parse("20180208",dateTimeFormatter).toDate());
     }
 }
-
